@@ -31,6 +31,7 @@ function generateRegistrationId($ticket_type) {
         case 'couple': $prefix = 'CPL'; break;
         case 'cohost_platinum': $prefix = 'PLT'; break;
         case 'cohost_gold': $prefix = 'GLD'; break;
+        case 'cohost_silver': $prefix = 'SLV'; break;
         default: $prefix = 'REG';
     }
     return $prefix . date('Ymd') . substr(uniqid(), -6) . rand(100, 999);
@@ -95,8 +96,8 @@ function sendConfirmationEmail($to, $subject, $body) {
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'sednainfo5@gmail.com';   // 👈 अपना Gmail यहाँ लिखो
-        $mail->Password   = 'mfzm afcu fwma latu'; // 👈 वो 16 अंकों वाला कोड यहाँ लिखो
+        $mail->Username   = 'sednainfo5@gmail.com';
+        $mail->Password   = 'mfzm afcu fwma latu';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
@@ -205,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($ticket_type === 'couple') {
             $full_name = $_POST['full_name'] ?? '';
-            $designation = $_POST['designation'] ?? '';
+            // Designation is NOT required for couple - removed from INSERT
             $role = $_POST['role'] ?? '';
             $spouse_name = $_POST['spouse_name'] ?? '';
             $club_id = $_POST['club_id'] ?? null;
@@ -215,10 +216,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (!$full_name) {
                 throw new Exception('Full name is required.');
-            }
-            
-            if (!$designation) {
-                throw new Exception('Designation is required.');
             }
             
             if (!$role) {
@@ -232,11 +229,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $person_name = $full_name;
             $screenshot_filename = saveScreenshot($screenshot_file, $person_name, $ticket_type);
             
+            // REMOVED designation column from the INSERT statement
             $sql = "INSERT INTO couple_registrations (
-                registration_id, full_name, uti_number, screenshot_filename, designation, role, spouse_name,
+                registration_id, full_name, uti_number, screenshot_filename, role, spouse_name,
                 email, mobile, club_id, club_name, food_preference, alcohol, amount_paid
             ) VALUES (
-                :reg_id, :full_name, :uti, :ss_filename, :designation, :role, :spouse_name,
+                :reg_id, :full_name, :uti, :ss_filename, :role, :spouse_name,
                 :email, :mobile, :club_id, :club_name, :food, :alcohol, :amount
             )";
             
@@ -246,7 +244,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':full_name' => $full_name,
                 ':uti' => $uti_number,
                 ':ss_filename' => $screenshot_filename,
-                ':designation' => $designation,
                 ':role' => $role,
                 ':spouse_name' => $spouse_name,
                 ':email' => $email,
@@ -312,6 +309,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':amount' => $amount_paid
             ]);
             
+        } elseif ($ticket_type === 'cohost_silver') {
+            $full_name = $_POST['full_name'] ?? '';
+            
+            if (!$full_name) {
+                throw new Exception('Full name is required.');
+            }
+            
+            $person_name = $full_name;
+            $screenshot_filename = saveScreenshot($screenshot_file, $person_name, $ticket_type);
+            
+            $sql = "INSERT INTO cohost_silver_registrations (
+                registration_id, uti_number, screenshot_filename, full_name, email, mobile, amount_paid
+            ) VALUES (
+                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :amount
+            )";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':reg_id' => $registration_id,
+                ':uti' => $uti_number,
+                ':ss_filename' => $screenshot_filename,
+                ':full_name' => $full_name,
+                ':email' => $email,
+                ':mobile' => $mobile,
+                ':amount' => $amount_paid
+            ]);
+            
         } else {
             throw new Exception('Invalid ticket type.');
         }
@@ -322,6 +346,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'couple': $ticket_label = 'Couple Entry'; break;
             case 'cohost_platinum': $ticket_label = 'Co Hosting Platinum'; break;
             case 'cohost_gold': $ticket_label = 'CO Hosting Gold'; break;
+            case 'cohost_silver': $ticket_label = 'Co Hosting Silver'; break;
         }
 
         // Try to send email but don't fail if it doesn't work
@@ -329,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $email_subject = 'Rotary Party Registration Confirmation';
             $email_body = "Dear " . ($full_name ?: $person_name ?: 'Participant') . ",\n\n";
-            $email_body .= "Thank you for registering for the Rotary Party event.\n\n";
+            $email_body .= "Thank you for registering for the 3rd TRF Seminar Registration\n\n";
             $email_body .= "Registration Details:\n";
             $email_body .= "Registration ID: {$registration_id}\n";
             $email_body .= "Ticket Type: {$ticket_label}\n";
@@ -351,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($alcohol)) {
                 $email_body .= "Alcohol: {$alcohol}\n";
             }
-            $email_body .= "\nPlease keep this email for your reference.\n\nRegards,\nRotary Registration Team";
+            $email_body .= "\nPlease keep this email for your reference.\n\nRegards,\nRotary Club of Dombivli City";
             
             $email_sent = sendConfirmationEmail($email, $email_subject, $email_body);
         } catch (Exception $e) {

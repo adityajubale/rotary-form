@@ -86,6 +86,25 @@ CREATE TABLE `cohost_platinum_registrations` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `cohost_silver_registrations`
+--
+
+CREATE TABLE `cohost_silver_registrations` (
+  `id` int(11) NOT NULL,
+  `registration_id` varchar(50) NOT NULL,
+  `uti_number` varchar(100) NOT NULL,
+  `screenshot_filename` varchar(500) DEFAULT NULL,
+  `full_name` varchar(200) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `mobile` varchar(20) NOT NULL,
+  `amount_paid` decimal(10,2) NOT NULL,
+  `payment_status` enum('pending','completed','failed') DEFAULT 'completed',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `couple_registrations`
 --
 
@@ -163,6 +182,15 @@ ALTER TABLE `cohost_platinum_registrations`
   ADD KEY `idx_email` (`email`);
 
 --
+-- Indexes for table `cohost_silver_registrations`
+--
+ALTER TABLE `cohost_silver_registrations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `registration_id` (`registration_id`),
+  ADD UNIQUE KEY `uti_number` (`uti_number`),
+  ADD KEY `idx_email` (`email`);
+
+--
 -- Indexes for table `couple_registrations`
 --
 ALTER TABLE `couple_registrations`
@@ -202,6 +230,12 @@ ALTER TABLE `cohost_gold_registrations`
 -- AUTO_INCREMENT for table `cohost_platinum_registrations`
 --
 ALTER TABLE `cohost_platinum_registrations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `cohost_silver_registrations`
+--
+ALTER TABLE `cohost_silver_registrations`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
