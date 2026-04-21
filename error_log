@@ -1,0 +1,20 @@
+[20-Apr-2026 17:48:02 UTC] PHP Fatal error:  Uncaught Exception: File too large. Max 5MB allowed. in /home3/sednaris/bhaviindia.com/rotary/save_registration.php:64
+Stack trace:
+#0 /home3/sednaris/bhaviindia.com/rotary/save_registration.php(170): saveScreenshot(Array, 'Hardik Balmukun...', 'single')
+#1 {main}
+  thrown in /home3/sednaris/bhaviindia.com/rotary/save_registration.php on line 64
+[20-Apr-2026 17:49:00 UTC] PHP Fatal error:  Uncaught Exception: File too large. Max 5MB allowed. in /home3/sednaris/bhaviindia.com/rotary/save_registration.php:64
+Stack trace:
+#0 /home3/sednaris/bhaviindia.com/rotary/save_registration.php(170): saveScreenshot(Array, 'Pawan  Singhal', 'single')
+#1 {main}
+  thrown in /home3/sednaris/bhaviindia.com/rotary/save_registration.php on line 64
+[20-Apr-2026 17:51:01 UTC] PHP Fatal error:  Uncaught Exception: File too large. Max 5MB allowed. in /home3/sednaris/bhaviindia.com/rotary/save_registration.php:64
+Stack trace:
+#0 /home3/sednaris/bhaviindia.com/rotary/save_registration.php(253): saveScreenshot(Array, 'virjs', 'cohost_platinum')
+#1 {main}
+  thrown in /home3/sednaris/bhaviindia.com/rotary/save_registration.php on line 64
+[20-Apr-2026 17:52:43 UTC] PHP Fatal error:  Uncaught Exception: File too large. Max 5MB allowed. in /home3/sednaris/bhaviindia.com/rotary/save_registration.php:64
+Stack trace:
+#0 /home3/sednaris/bhaviindia.com/rotary/save_registration.php(170): saveScreenshot(Array, 'Venkatesh Konda', 'single')
+#1 {main}
+  thrown in /home3/sednaris/bhaviindia.com/rotary/save_registration.php on line 64

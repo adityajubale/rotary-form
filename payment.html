@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>3rd TRF Seminar Registration | QR Payment + Database</title>
+    <style>
+        /* minimal styling - simple functional form */
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 20px 25px;
+            box-shadow: none;
+        }
+        h2, h3 {
+            margin-top: 0;
+            font-weight: normal;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 6px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #aaa;
+            background: #fff;
+            font-size: 1rem;
+            box-sizing: border-box;
+            border-radius: 0;
+        }
+        button {
+            background: #0b2b4b;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: auto;
+            margin-top: 8px;
+            border-radius: 0;
+        }
+        .option-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 15px 0 20px;
+        }
+        .option-btn {
+            background: #e9ecef;
+            color: #1e2a3e;
+            border: 1px solid #adb5bd;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .option-btn.active {
+            background: #0b2b4b;
+            color: white;
+            border-color: #0b2b4b;
+        }
+        .error {
+            color: #b91c1c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        .info-text {
+            background: #f8f9fa;
+            padding: 8px;
+            border-left: 3px solid #6c757d;
+            font-size: 0.9rem;
+        }
+        .success-text {
+            background: #d4edda;
+            padding: 12px;
+            border-left: 3px solid #28a745;
+            font-size: 0.95rem;
+            margin-top: 15px;
+        }
+        .qr-area {
+            text-align: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+        }
+        .qr-area img {
+            max-width: 180px;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+        .uti-note {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .payment-proof-section {
+            background: #fef9e6;
+            border: 1px solid #ffd966;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .preview-image {
+            margin-top: 8px;
+            max-width: 100%;
+        }
+        .preview-image img {
+            max-width: 150px;
+            max-height: 150px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        hr {
+            margin: 15px 0;
+        }
+        .simple-form {
+            background: #fff;
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .member-list {
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        select[multiple] {
+            height: auto;
+            min-height: 120px;
+        }
+        .help-text {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📋 3rd TRF Seminar Registration</h2>
+    <p>Select your ticket type:</p>
+
+    <!-- Selection buttons for 4 types -->
+    <div class="option-buttons" id="ticketTypeGroup">
+        <button type="button" class="option-btn" data-type="single">Single</button>
+        <button type="button" class="option-btn" data-type="couple">Couple</button>
+        <button type="button" class="option-btn" data-type="cohost_platinum">Co Hosting Platinum</button>
+        <button type="button" class="option-btn" data-type="cohost_gold">Co Hosting Gold</button>
+    </div>
+
+    <!-- DYNAMIC FORM SECTION -->
+    <div id="dynamicFormArea">
+        <div class="info-text">👈 Please select an option above to continue.</div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // CONFIGURATION
+    // ============================================================
+    const QR_CODE_IMAGE = "img/qr_code.jpeg"; // Path to your QR code image for payment
+    
+    const TICKET_PRICES = {
+        single: 1500,
+        couple: 3000,
+        cohost_platinum: 7500,
+        cohost_gold: 5000
+    };
+    
+    const TICKET_LABELS = {
+        single: "Single Entry",
+        couple: "Couple Entry",
+        cohost_platinum: "Co Hosting Platinum",
+        cohost_gold: "CO hosting Gold"
+    };
+    
+    // ============================================================
+    // DATABASE: CLUB DATA FETCH FROM 'club_members' TABLE
+    // ============================================================
+    async function fetchClubsFromDatabase() {
+        try {
+            const response = await fetch('get_clubs.php');
+            if (!response.ok) {
+                throw new Error('Failed to fetch clubs from server');
+            }
+            const clubs = await response.json();
+            if (clubs.error) {
+                throw new Error(clubs.error);
+            }
+            if (!Array.isArray(clubs)) {
+                console.warn('Invalid clubs data format', clubs);
+                return [];
+            }
+            return clubs.map(club => ({ 
+                id: club.id, 
+                name: club.club_name || club.name || 'Unknown Club' 
+            }));
+        } catch (error) {
+            console.error('Error fetching clubs from club_members table:', error);
+            return [];
+        }
+    }
+    
+    // ============================================================
+    // FETCH MEMBERS BY CLUB NAME
+    // ============================================================
+    async function fetchMembersByClub(clubName) {
+        try {
+            const response = await fetch(`get_members.php?clubname=${encodeURIComponent(clubName)}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch members');
+            }
+            const members = await response.json();
+            if (members.error) {
+                throw new Error(members.error);
+            }
+            return members;
+        } catch (error) {
+            console.error('Error fetching members:', error);
+            return [];
+        }
+    }
+    
+    // ============================================================
+    // AJAX function to submit data to PHP backend
+    // ============================================================
+    async function submitToDatabase(formDataObj, screenshotFile) {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            
+            for (let key in formDataObj) {
+                if (formDataObj[key] !== undefined && formDataObj[key] !== null) {
+                    formData.append(key, formDataObj[key]);
+                }
+            }
+            
+            if (screenshotFile) {
+                formData.append('screenshot', screenshotFile);
+            }
+            
+            fetch('save_registration.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async response => {
+                const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        resolve(data);
+                    } else {
+                        reject(new Error(data.message || 'Database save failed'));
+                    }
+                } catch (e) {
+                    console.error('Server response:', text);
+                    reject(new Error('Server error. Please check your PHP configuration.'));
+                }
+            })
+            .catch(error => {
+                reject(new Error('Connection error: ' + error.message));
+            });
+        });
+    }
+    
+    // ============================================================
+    // SUCCESS HANDLER with database save
+    // ============================================================
+    async function showSuccessAndSendEmail(formData, ticketType, utiNumber, screenshotFile, additionalDetails) {
+        const { name, email, mobile } = formData;
+        const screenshotName = screenshotFile ? screenshotFile.name : "No file";
+        
+        const dbData = {
+            ticket_type: ticketType,
+            uti_number: utiNumber,
+            email: email,
+            mobile: mobile,
+            amount_paid: TICKET_PRICES[ticketType],
+            ...additionalDetails
+        };
+        
+        dynamicArea.innerHTML = `
+            <div class="info-text">
+                ⏳ Saving registration data to database... Please wait.
+            </div>
+        `;
+        
+        try {
+            const result = await submitToDatabase(dbData, screenshotFile);
+            
+            if (result.success) {
+                    const emailStatus = result.email_sent ? `Confirmation email sent to ${email}.` : `Confirmation email could not be sent automatically. Please verify your mail server settings.`;
+                    
+                    dynamicArea.innerHTML = `
+                        <div class="success-text">
+                            ✅ <strong>Registration Successful!</strong><br><br>
+                            Registration ID: ${result.registration_id || 'N/A'}<br>
+                            Ticket: ${TICKET_LABELS[ticketType]}<br>
+                            UTI Number: ${utiNumber}<br>
+                            Payment Screenshot: ${screenshotName}<br>
+                            ${emailStatus}<br><br>
+                            <em>Please keep this confirmation for your reference.</em>
+                        </div>
+                    `;
+                
+                setActiveButton(null);
+                currentSelectedType = null;
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            dynamicArea.innerHTML = `
+                <div class="error" style="background:#f8d7da; padding:12px;">
+                    ❌ Error saving registration: ${error.message}<br>
+                    Please try again or contact support.
+                </div>
+            `;
+        }
+    }
+    
+    // ============================================================
+    // GLOBAL VARIABLES
+    // ============================================================
+    let currentSelectedType = null;
+    let clubsList = [];
+    const dynamicArea = document.getElementById('dynamicFormArea');
+    const optionBtns = document.querySelectorAll('.option-btn');
+    
+    function setActiveButton(selectedType) {
+        optionBtns.forEach(btn => {
+            const typeVal = btn.getAttribute('data-type');
+            if (typeVal === selectedType) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+    
+    async function loadClubs() {
+        clubsList = await fetchClubsFromDatabase();
+        return clubsList;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // ============================================================
+    // QR CODE + UTI + SCREENSHOT SECTION
+    // ============================================================
+    function getPaymentSectionWithPreview() {
+        return `
+            <div class="qr-area">
+                <p><strong>📱 Scan QR Code to Pay</strong></p>
+                <img src="${QR_CODE_IMAGE}" alt="Payment QR Code" style="max-width:180px; border:1px solid #ccc;">
+                <p class="uti-note">Scan this QR code using any UPI app (Google Pay, PhonePe, Paytm, etc.) and complete the payment.</p>
+            </div>
+            
+            <div class="payment-proof-section">
+                <p><strong>💰 Payment Proof (Mandatory)</strong></p>
+                <div class="form-group">
+                    <label>🔑 UTI Number / Transaction ID *</label>
+                    <input type="text" id="utiNumber" placeholder="Enter UTI number from payment receipt/bank statement" required>
+                    <div class="uti-note">Example: UTR123456789, UPI Transaction ID, or Reference Number</div>
+                </div>
+                <div class="form-group">
+                    <label>📎 Upload Payment Screenshot / Transaction Screenshot (Optional)</label>
+                    <input type="file" id="screenshotUpload" accept="image/*,.pdf" capture="environment">
+                    <div id="imagePreview" class="preview-image"></div>
+                    <div class="uti-note">You can optionally upload a clear screenshot of the successful payment (JPG, PNG, or PDF).</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function setupScreenshotPreview() {
+        const fileInput = document.getElementById('screenshotUpload');
+        if (!fileInput) return;
+        
+        fileInput.addEventListener('change', function(e) {
+            const previewDiv = document.getElementById('imagePreview');
+            if (!previewDiv) return;
+            
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        previewDiv.innerHTML = `<img src="${evt.target.result}" alt="Screenshot Preview" style="max-width:150px; max-height:150px; border:1px solid #ccc;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewDiv.innerHTML = `<span style="font-size:0.8rem;">📄 ${file.name} (preview not available)</span>`;
+                }
+            } else {
+                previewDiv.innerHTML = '';
+            }
+        });
+    }
+    
+    function validatePaymentProof(utiNumber, screenshotFile) {
+        if (!utiNumber || utiNumber.trim() === "") {
+            return "UTI Number / Transaction ID is mandatory. Please complete payment via QR scan and enter the UTI number.";
+        }
+        if (utiNumber.trim().length < 4) {
+            return "Please enter a valid UTI/Transaction ID (minimum 4 characters).";
+        }
+        // Screenshot is optional - no validation needed
+        return null;
+    }
+    
+    function getPaymentData() {
+        const uti = document.getElementById('utiNumber')?.value.trim();
+        const fileInput = document.getElementById('screenshotUpload');
+        const screenshotFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+        return { uti, screenshotFile };
+    }
+    
+    // ============================================================
+    // BUILD FORMS WITH CLUB AND MEMBER SELECTION
+    // ============================================================
+    function buildSingleForm(clubs) {
+        if (!clubs || clubs.length === 0) {
+            return `
+                <div id="singleForm">
+                    <h3>Single Registration - ₹${TICKET_PRICES.single}</h3>
+                    <div class="error" style="background:#f8d7da; padding:12px;">
+                        ❌ Unable to load club data from database. Please ensure 'club_members' table exists and get_clubs.php returns valid data.
+                    </div>
+                    <div class="form-group">
+                        <label>Select Club *</label>
+                        <select id="clubSelect" required>
+                            <option value="">-- Choose Club --</option>
+                        </select>
+                    </div>
+                    ${getPaymentSectionWithPreview()}
+                </div>
+            `;
+        }
+        
+        return `
+            <div id="singleForm">
+                <h3>Single Registration - ₹${TICKET_PRICES.single}</h3>
+                <div class="form-group">
+                    <label>Select Club *</label>
+                    <select id="clubSelect" required>
+                        <option value="">-- Choose Club --</option>
+                        ${clubs.map(club => `<option value="${escapeHtml(club.name)}">${escapeHtml(club.name)}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select Member Name *</label>
+                    <select id="memberSelect" required disabled>
+                        <option value="">-- First select a club --</option>
+                    </select>
+                    <div class="help-text">Members from the selected club will appear here</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="role" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="COG">COG</option>
+                        <option value="DISTRICT OFFICER">DISTRICT OFFICER</option>
+                        <option value="MEMBER">MEMBER</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Designation *</label>
+                    <input type="text" id="designation" placeholder="e.g. Manager, Guest, CEO" required>
+                </div>
+                <div class="form-group">
+                    <label>Mobile No *</label>
+                    <input type="tel" id="mobile" placeholder="10 digit number" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Food Preference *</label>
+                    <select id="foodPref" required>
+                        <option value="">-- Select --</option>
+                        <option value="Veg">Veg</option>
+                        <option value="Nonveg">Nonveg</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Alcohol *</label>
+                    <select id="alcohol" required>
+                        <option value="">-- Select --</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                
+                <hr>
+                ${getPaymentSectionWithPreview()}
+               
+                <button type="button" id="singleSubmitBtn">✓ SUBMIT REGISTRATION</button>
+                <div id="singleErrorMsg" class="error"></div>
+            </div>
+        `;
+    }
+    
+    function buildCoupleForm(clubs) {
+        if (!clubs || clubs.length === 0) {
+            return `
+                <div id="coupleForm">
+                    <h3>Couple Registration - ₹${TICKET_PRICES.couple}</h3>
+                    <div class="error" style="background:#f8d7da; padding:12px;">
+                        ❌ Unable to load club data from database. Please ensure 'club_members' table exists.
+                    </div>
+                    <div class="form-group">
+                        <label>Select Club *</label>
+                        <select id="clubSelectCouple" required>
+                            <option value="">-- Choose Club --</option>
+                        </select>
+                    </div>
+                    ${getPaymentSectionWithPreview()}
+                </div>
+            `;
+        }
+        
+        return `
+            <div id="coupleForm">
+                <h3>Couple Registration - ₹${TICKET_PRICES.couple}</h3>
+                <div class="form-group">
+                    <label>Select Club *</label>
+                    <select id="clubSelectCouple" required>
+                        <option value="">-- Choose Club --</option>
+                        ${clubs.map(club => `<option value="${escapeHtml(club.name)}">${escapeHtml(club.name)}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select Member Name (Primary) *</label>
+                    <select id="memberSelectCouple" required disabled>
+                        <option value="">-- First select a club --</option>
+                    </select>
+                    <div class="help-text">Members from the selected club will appear here</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="roleCouple" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="COG">COG</option>
+                        <option value="DISTRICT OFFICER">DISTRICT OFFICER</option>
+                        <option value="MEMBER">MEMBER</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Designation (Primary) *</label>
+                    <input type="text" id="designationCouple" placeholder="Designation" required>
+                </div>
+                <div class="form-group">
+                    <label>Mobile No *</label>
+                    <input type="tel" id="mobileCouple" placeholder="Mobile number" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="emailCouple" placeholder="Email address" required>
+                </div>
+                <div class="form-group">
+                    <label>Spouse Name *</label>
+                    <input type="text" id="spouseName" placeholder="Spouse full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Food Preference *</label>
+                    <select id="foodPrefCouple" required>
+                        <option value="">-- Select --</option>
+                        <option value="Veg">Veg</option>
+                        <option value="Nonveg">Nonveg</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Alcohol *</label>
+                    <select id="alcoholCouple" required>
+                        <option value="">-- Select --</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                
+                <hr>
+                ${getPaymentSectionWithPreview()}
+               
+                <button type="button" id="coupleSubmitBtn">✓ SUBMIT REGISTRATION</button>
+                <div id="coupleErrorMsg" class="error"></div>
+            </div>
+        `;
+    }
+    
+    function buildCohostPlatinumForm() {
+        return `
+            <div id="cohostPlatinumForm">
+                <h3>Co Hosting Platinum - ₹${TICKET_PRICES.cohost_platinum}</h3>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullNamePlatinum" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Mobile No *</label>
+                    <input type="tel" id="mobilePlatinum" placeholder="Mobile number" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="emailPlatinum" placeholder="Email address" required>
+                </div>
+                
+                <hr>
+                ${getPaymentSectionWithPreview()}
+                
+                <button type="button" id="platinumSubmitBtn">✓ SUBMIT REGISTRATION</button>
+                <div id="platinumErrorMsg" class="error"></div>
+            </div>
+        `;
+    }
+    
+    function buildCohostGoldForm() {
+        return `
+            <div id="cohostGoldForm">
+                <h3>CO hosting Gold - ₹${TICKET_PRICES.cohost_gold}</h3>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullNameGold" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Mobile No *</label>
+                    <input type="tel" id="mobileGold" placeholder="Mobile number" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="emailGold" placeholder="Email address" required>
+                </div>
+                
+                <hr>
+                ${getPaymentSectionWithPreview()}
+                
+                <button type="button" id="goldSubmitBtn">✓ SUBMIT REGISTRATION</button>
+                <div id="goldErrorMsg" class="error"></div>
+            </div>
+        `;
+    }
+    
+    // ============================================================
+    // MEMBER LOADING FUNCTION
+    // ============================================================
+    async function loadMembers(clubName, memberSelectId) {
+        const memberSelect = document.getElementById(memberSelectId);
+        if (!memberSelect) return;
+        
+        if (!clubName) {
+            memberSelect.innerHTML = '<option value="">-- First select a club --</option>';
+            memberSelect.disabled = true;
+            return;
+        }
+        
+        memberSelect.innerHTML = '<option value="">Loading members...</option>';
+        memberSelect.disabled = true;
+        
+        try {
+            const members = await fetchMembersByClub(clubName);
+            
+            if (members && members.length > 0) {
+                memberSelect.innerHTML = '<option value="">-- Select Member --</option>' + 
+                    members.map(member => `<option value="${escapeHtml(member.membername)}" data-mobile="${escapeHtml(member.mobile)}" data-email="${escapeHtml(member.email)}" data-rotaryid="${escapeHtml(member.rotaryid)}">${escapeHtml(member.membername)}</option>`).join('');
+                memberSelect.disabled = false;
+                
+                // Add event listener to auto-fill mobile and email when member is selected
+                memberSelect.onchange = function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        const mobile = selectedOption.getAttribute('data-mobile');
+                        const email = selectedOption.getAttribute('data-email');
+                        
+                        // Find the corresponding mobile and email fields in the same form
+                        const formContainer = memberSelect.closest('[id$="Form"]');
+                        if (formContainer) {
+                            const mobileField = formContainer.querySelector('[id$="mobile"], [id*="mobile"]');
+                            const emailField = formContainer.querySelector('[id$="email"], [id*="email"]');
+                            if (mobileField && mobile) mobileField.value = mobile;
+                            if (emailField && email) emailField.value = email;
+                        }
+                    }
+                };
+            } else {
+                memberSelect.innerHTML = '<option value="">-- No members found --</option>';
+                memberSelect.disabled = true;
+            }
+        } catch (error) {
+            console.error('Error loading members:', error);
+            memberSelect.innerHTML = '<option value="">-- Error loading members --</option>';
+            memberSelect.disabled = true;
+        }
+    }
+    
+    // ============================================================
+    // SUBMIT HANDLERS with database integration
+    // ============================================================
+    
+    async function handleSingleSubmit() {
+        const errorDiv = document.getElementById('singleErrorMsg');
+        const { uti, screenshotFile } = getPaymentData();
+        const paymentError = validatePaymentProof(uti, screenshotFile);
+        if (paymentError) {
+            errorDiv.innerText = paymentError;
+            return;
+        }
+        
+        const clubName = document.getElementById('clubSelect')?.value;
+        const memberName = document.getElementById('memberSelect')?.value;
+        const role = document.getElementById('role')?.value;
+        const designation = document.getElementById('designation')?.value.trim();
+        const mobile = document.getElementById('mobile')?.value.trim();
+        const email = document.getElementById('email')?.value.trim();
+        const food = document.getElementById('foodPref')?.value;
+        const alcohol = document.getElementById('alcohol')?.value;
+        
+        if (!clubName) { errorDiv.innerText = "Please select a club"; return; }
+        if (!memberName) { errorDiv.innerText = "Please select a member name"; return; }
+        if (!role) { errorDiv.innerText = "Please select a role"; return; }
+        if (!designation) { errorDiv.innerText = "Designation is required"; return; }
+        if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required (10 digits)"; return; }
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
+        if (!food) { errorDiv.innerText = "Please select food preference"; return; }
+        if (!alcohol) { errorDiv.innerText = "Please select alcohol preference"; return; }
+        
+        errorDiv.innerText = '';
+        
+        const additionalDetails = {
+            full_name: memberName,
+            person_name: memberName,
+            club_name: clubName,
+            role: role,
+            designation: designation,
+            food_preference: food,
+            alcohol: alcohol
+        };
+        
+        await showSuccessAndSendEmail(
+            { name: memberName, email: email, mobile: mobile },
+            'single',
+            uti,
+            screenshotFile,
+            additionalDetails
+        );
+    }
+    
+    async function handleCoupleSubmit() {
+        const errorDiv = document.getElementById('coupleErrorMsg');
+        const { uti, screenshotFile } = getPaymentData();
+        const paymentError = validatePaymentProof(uti, screenshotFile);
+        if (paymentError) {
+            errorDiv.innerText = paymentError;
+            return;
+        }
+        
+        const clubName = document.getElementById('clubSelectCouple')?.value;
+        const memberName = document.getElementById('memberSelectCouple')?.value;
+        const role = document.getElementById('roleCouple')?.value;
+        const designation = document.getElementById('designationCouple')?.value.trim();
+        const mobile = document.getElementById('mobileCouple')?.value.trim();
+        const email = document.getElementById('emailCouple')?.value.trim();
+        const spouse = document.getElementById('spouseName')?.value.trim();
+        const food = document.getElementById('foodPrefCouple')?.value;
+        const alcohol = document.getElementById('alcoholCouple')?.value;
+        
+        if (!clubName) { errorDiv.innerText = "Please select a club"; return; }
+        if (!memberName) { errorDiv.innerText = "Please select a member name"; return; }
+        if (!role) { errorDiv.innerText = "Please select a role"; return; }
+        if (!designation) { errorDiv.innerText = "Designation is required"; return; }
+        if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required"; return; }
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
+        if (!spouse) { errorDiv.innerText = "Spouse name is required"; return; }
+        if (!food) { errorDiv.innerText = "Food preference required"; return; }
+        if (!alcohol) { errorDiv.innerText = "Alcohol preference required"; return; }
+        
+        errorDiv.innerText = '';
+        
+        const additionalDetails = {
+            full_name: memberName,
+            person_name: memberName,
+            club_name: clubName,
+            role: role,
+            designation: designation,
+            spouse_name: spouse,
+            food_preference: food,
+            alcohol: alcohol
+        };
+        
+        await showSuccessAndSendEmail(
+            { name: memberName, email: email, mobile: mobile },
+            'couple',
+            uti,
+            screenshotFile,
+            additionalDetails
+        );
+    }
+    
+    async function handlePlatinumSubmit() {
+        const errorDiv = document.getElementById('platinumErrorMsg');
+        const { uti, screenshotFile } = getPaymentData();
+        const paymentError = validatePaymentProof(uti, screenshotFile);
+        if (paymentError) {
+            errorDiv.innerText = paymentError;
+            return;
+        }
+        
+        const name = document.getElementById('fullNamePlatinum')?.value.trim();
+        const mobile = document.getElementById('mobilePlatinum')?.value.trim();
+        const email = document.getElementById('emailPlatinum')?.value.trim();
+        
+        if (!name) { errorDiv.innerText = "Full name is required"; return; }
+        if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required"; return; }
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
+        
+        errorDiv.innerText = '';
+        
+        const additionalDetails = {
+            person_name: name,
+            full_name: name
+        };
+        
+        await showSuccessAndSendEmail(
+            { name: name, email: email, mobile: mobile },
+            'cohost_platinum',
+            uti,
+            screenshotFile,
+            additionalDetails
+        );
+    }
+    
+    async function handleGoldSubmit() {
+        const errorDiv = document.getElementById('goldErrorMsg');
+        const { uti, screenshotFile } = getPaymentData();
+        const paymentError = validatePaymentProof(uti, screenshotFile);
+        if (paymentError) {
+            errorDiv.innerText = paymentError;
+            return;
+        }
+        
+        const name = document.getElementById('fullNameGold')?.value.trim();
+        const mobile = document.getElementById('mobileGold')?.value.trim();
+        const email = document.getElementById('emailGold')?.value.trim();
+        
+        if (!name) { errorDiv.innerText = "Full name is required"; return; }
+        if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required"; return; }
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
+        
+        errorDiv.innerText = '';
+        
+        const additionalDetails = {
+            person_name: name,
+            full_name: name
+        };
+        
+        await showSuccessAndSendEmail(
+            { name: name, email: email, mobile: mobile },
+            'cohost_gold',
+            uti,
+            screenshotFile,
+            additionalDetails
+        );
+    }
+    
+    // ============================================================
+    // SETUP CLUB CHANGE EVENT LISTENERS
+    // ============================================================
+    function setupClubChangeListener(clubSelectId, memberSelectId) {
+        const clubSelect = document.getElementById(clubSelectId);
+        if (!clubSelect) return;
+        
+        clubSelect.addEventListener('change', function() {
+            const selectedClub = this.value;
+            loadMembers(selectedClub, memberSelectId);
+        });
+    }
+    
+    // ============================================================
+    // RENDER FUNCTION
+    // ============================================================
+    async function renderFormByType(ticketType) {
+        const clubs = await loadClubs();
+        
+        if (ticketType === 'single') {
+            dynamicArea.innerHTML = buildSingleForm(clubs);
+            setupScreenshotPreview();
+            setupClubChangeListener('clubSelect', 'memberSelect');
+            const submitBtn = document.getElementById('singleSubmitBtn');
+            if (submitBtn) submitBtn.addEventListener('click', handleSingleSubmit);
+        } 
+        else if (ticketType === 'couple') {
+            dynamicArea.innerHTML = buildCoupleForm(clubs);
+            setupScreenshotPreview();
+            setupClubChangeListener('clubSelectCouple', 'memberSelectCouple');
+            const submitBtn = document.getElementById('coupleSubmitBtn');
+            if (submitBtn) submitBtn.addEventListener('click', handleCoupleSubmit);
+        }
+        else if (ticketType === 'cohost_platinum') {
+            dynamicArea.innerHTML = buildCohostPlatinumForm();
+            setupScreenshotPreview();
+            const submitBtn = document.getElementById('platinumSubmitBtn');
+            if (submitBtn) submitBtn.addEventListener('click', handlePlatinumSubmit);
+        }
+        else if (ticketType === 'cohost_gold') {
+            dynamicArea.innerHTML = buildCohostGoldForm();
+            setupScreenshotPreview();
+            const submitBtn = document.getElementById('goldSubmitBtn');
+            if (submitBtn) submitBtn.addEventListener('click', handleGoldSubmit);
+        }
+        else {
+            dynamicArea.innerHTML = `<div class="info-text">👈 Please select a valid ticket type.</div>`;
+        }
+    }
+    
+    function attachTicketListeners() {
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const type = btn.getAttribute('data-type');
+                currentSelectedType = type;
+                setActiveButton(type);
+                await renderFormByType(type);
+            });
+        });
+    }
+    
+    async function init() {
+        await loadClubs();
+        attachTicketListeners();
+        dynamicArea.innerHTML = `<div class="info-text">👈 Select Single / Couple / Co-Hosting option to begin.</div>`;
+    }
+    
+    init();
+</script>
+</body>
+</html>
