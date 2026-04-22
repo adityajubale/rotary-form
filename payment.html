@@ -616,13 +616,31 @@
         `;
     }
     
-    function buildCohostPlatinumForm() {
+    function buildCohostPlatinumForm(clubs) {
+        if (!clubs || clubs.length === 0) {
+            return `
+                <div id="cohostPlatinumForm">
+                    <h3>Co Hosting Platinum - ₹${TICKET_PRICES.cohost_platinum}</h3>
+                    <div class="error" style="background:#f8d7da; padding:12px;">
+                        ❌ Unable to load club data from database. Please ensure 'club_members' table exists and get_clubs.php returns valid data.
+                    </div>
+                    ${getPaymentSectionWithPreview()}
+                </div>
+            `;
+        }
         return `
             <div id="cohostPlatinumForm">
                 <h3>Co Hosting Platinum - ₹${TICKET_PRICES.cohost_platinum}</h3>
                 <div class="form-group">
-                    <label>Rotary Club Name *</label>
-                    <input type="text" id="fullNamePlatinum" placeholder="Your Rotary Club Name" required>
+                    <label>Select Club *</label>
+                    <select id="clubSelectPlatinum" required>
+                        <option value="">-- Choose Club --</option>
+                        ${clubs.map(club => `<option value="${escapeHtml(club.name)}">${escapeHtml(club.name)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullNamePlatinum" placeholder="Enter full name" required>
                 </div>
                 <div class="form-group">
                     <label>Mobile No *</label>
@@ -642,13 +660,31 @@
         `;
     }
     
-    function buildCohostGoldForm() {
+    function buildCohostGoldForm(clubs) {
+        if (!clubs || clubs.length === 0) {
+            return `
+                <div id="cohostGoldForm">
+                    <h3>CO hosting Gold - ₹${TICKET_PRICES.cohost_gold}</h3>
+                    <div class="error" style="background:#f8d7da; padding:12px;">
+                        ❌ Unable to load club data from database. Please ensure 'club_members' table exists and get_clubs.php returns valid data.
+                    </div>
+                    ${getPaymentSectionWithPreview()}
+                </div>
+            `;
+        }
         return `
             <div id="cohostGoldForm">
                 <h3>CO hosting Gold - ₹${TICKET_PRICES.cohost_gold}</h3>
                 <div class="form-group">
-                    <label>Rotary Club Name *</label>
-                    <input type="text" id="fullNameGold" placeholder="Your Rotary Club Name" required>
+                    <label>Select Club *</label>
+                    <select id="clubSelectGold" required>
+                        <option value="">-- Choose Club --</option>
+                        ${clubs.map(club => `<option value="${escapeHtml(club.name)}">${escapeHtml(club.name)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullNameGold" placeholder="Enter full name" required>
                 </div>
                 <div class="form-group">
                     <label>Mobile No *</label>
@@ -668,13 +704,31 @@
         `;
     }
     
-    function buildCohostSilverForm() {
+    function buildCohostSilverForm(clubs) {
+        if (!clubs || clubs.length === 0) {
+            return `
+                <div id="cohostSilverForm">
+                    <h3>Co Hosting Silver - ₹${TICKET_PRICES.cohost_silver}</h3>
+                    <div class="error" style="background:#f8d7da; padding:12px;">
+                        ❌ Unable to load club data from database. Please ensure 'club_members' table exists and get_clubs.php returns valid data.
+                    </div>
+                    ${getPaymentSectionWithPreview()}
+                </div>
+            `;
+        }
         return `
             <div id="cohostSilverForm">
                 <h3>Co Hosting Silver - ₹${TICKET_PRICES.cohost_silver}</h3>
                 <div class="form-group">
-                    <label>Rotary Club Name *</label>
-                    <input type="text" id="fullNameSilver" placeholder="Your Rotary Club Name" required>
+                    <label>Select Club *</label>
+                    <select id="clubSelectSilver" required>
+                        <option value="">-- Choose Club --</option>
+                        ${clubs.map(club => `<option value="${escapeHtml(club.name)}">${escapeHtml(club.name)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullNameSilver" placeholder="Enter full name" required>
                 </div>
                 <div class="form-group">
                     <label>Mobile No *</label>
@@ -853,23 +907,26 @@
             return;
         }
         
-        const name = document.getElementById('fullNamePlatinum')?.value.trim();
+        const clubName = document.getElementById('clubSelectPlatinum')?.value;
+        const fullName = document.getElementById('fullNamePlatinum')?.value.trim();
         const mobile = document.getElementById('mobilePlatinum')?.value.trim();
         const email = document.getElementById('emailPlatinum')?.value.trim();
         
-        if (!name) { errorDiv.innerText = "Full name is required"; return; }
+        if (!clubName) { errorDiv.innerText = "Please select a club"; return; }
+        if (!fullName) { errorDiv.innerText = "Full name is required"; return; }
         if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required"; return; }
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
         
         errorDiv.innerText = '';
         
         const additionalDetails = {
-            person_name: name,
-            full_name: name
+            person_name: fullName,
+            full_name: fullName,
+            club_name: clubName
         };
         
         await showSuccessAndSendEmail(
-            { name: name, email: email, mobile: mobile },
+            { name: fullName, email: email, mobile: mobile },
             'cohost_platinum',
             uti,
             screenshotFile,
@@ -886,23 +943,26 @@
             return;
         }
         
-        const name = document.getElementById('fullNameGold')?.value.trim();
+        const clubName = document.getElementById('clubSelectGold')?.value;
+        const fullName = document.getElementById('fullNameGold')?.value.trim();
         const mobile = document.getElementById('mobileGold')?.value.trim();
         const email = document.getElementById('emailGold')?.value.trim();
         
-        if (!name) { errorDiv.innerText = "Full name is required"; return; }
+        if (!clubName) { errorDiv.innerText = "Please select a club"; return; }
+        if (!fullName) { errorDiv.innerText = "Full name is required"; return; }
         if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required"; return; }
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
         
         errorDiv.innerText = '';
         
         const additionalDetails = {
-            person_name: name,
-            full_name: name
+            person_name: fullName,
+            full_name: fullName,
+            club_name: clubName
         };
         
         await showSuccessAndSendEmail(
-            { name: name, email: email, mobile: mobile },
+            { name: fullName, email: email, mobile: mobile },
             'cohost_gold',
             uti,
             screenshotFile,
@@ -919,23 +979,26 @@
             return;
         }
         
-        const name = document.getElementById('fullNameSilver')?.value.trim();
+        const clubName = document.getElementById('clubSelectSilver')?.value;
+        const fullName = document.getElementById('fullNameSilver')?.value.trim();
         const mobile = document.getElementById('mobileSilver')?.value.trim();
         const email = document.getElementById('emailSilver')?.value.trim();
         
-        if (!name) { errorDiv.innerText = "Full name is required"; return; }
+        if (!clubName) { errorDiv.innerText = "Please select a club"; return; }
+        if (!fullName) { errorDiv.innerText = "Full name is required"; return; }
         if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required"; return; }
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
         
         errorDiv.innerText = '';
         
         const additionalDetails = {
-            person_name: name,
-            full_name: name
+            person_name: fullName,
+            full_name: fullName,
+            club_name: clubName
         };
         
         await showSuccessAndSendEmail(
-            { name: name, email: email, mobile: mobile },
+            { name: fullName, email: email, mobile: mobile },
             'cohost_silver',
             uti,
             screenshotFile,
@@ -977,19 +1040,19 @@
             if (submitBtn) submitBtn.addEventListener('click', handleCoupleSubmit);
         }
         else if (ticketType === 'cohost_platinum') {
-            dynamicArea.innerHTML = buildCohostPlatinumForm();
+            dynamicArea.innerHTML = buildCohostPlatinumForm(clubs);
             setupScreenshotPreview();
             const submitBtn = document.getElementById('platinumSubmitBtn');
             if (submitBtn) submitBtn.addEventListener('click', handlePlatinumSubmit);
         }
         else if (ticketType === 'cohost_gold') {
-            dynamicArea.innerHTML = buildCohostGoldForm();
+            dynamicArea.innerHTML = buildCohostGoldForm(clubs);
             setupScreenshotPreview();
             const submitBtn = document.getElementById('goldSubmitBtn');
             if (submitBtn) submitBtn.addEventListener('click', handleGoldSubmit);
         }
         else if (ticketType === 'cohost_silver') {
-            dynamicArea.innerHTML = buildCohostSilverForm();
+            dynamicArea.innerHTML = buildCohostSilverForm(clubs);
             setupScreenshotPreview();
             const submitBtn = document.getElementById('silverSubmitBtn');
             if (submitBtn) submitBtn.addEventListener('click', handleSilverSubmit);

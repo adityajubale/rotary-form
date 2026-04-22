@@ -247,18 +247,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } elseif ($ticket_type === 'cohost_platinum') {
             $full_name = $_POST['full_name'] ?? '';
+            $club_id = $_POST['club_id'] ?? null;
+            $club_name = $_POST['club_name'] ?? '';
             
             if (!$full_name) {
                 throw new Exception('Full name is required.');
+            }
+            if (!$club_name) {
+                throw new Exception('Club name is required.');
             }
             
             $person_name = $full_name;
             $screenshot_filename = saveScreenshot($screenshot_file, $person_name, $ticket_type);
             
             $sql = "INSERT INTO cohost_platinum_registrations (
-                registration_id, uti_number, screenshot_filename, full_name, email, mobile, amount_paid
+                registration_id, uti_number, screenshot_filename, full_name, email, mobile, club_id, club_name, amount_paid
             ) VALUES (
-                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :amount
+                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :club_id, :club_name, :amount
             )";
             
             $stmt = $pdo->prepare($sql);
@@ -269,23 +274,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':full_name' => $full_name,
                 ':email' => $email,
                 ':mobile' => $mobile,
+                ':club_id' => $club_id ?: null,
+                ':club_name' => $club_name,
                 ':amount' => $amount_paid
             ]);
             
         } elseif ($ticket_type === 'cohost_gold') {
             $full_name = $_POST['full_name'] ?? '';
+            $club_id = $_POST['club_id'] ?? null;
+            $club_name = $_POST['club_name'] ?? '';
             
             if (!$full_name) {
                 throw new Exception('Full name is required.');
+            }
+            if (!$club_name) {
+                throw new Exception('Club name is required.');
             }
             
             $person_name = $full_name;
             $screenshot_filename = saveScreenshot($screenshot_file, $person_name, $ticket_type);
             
             $sql = "INSERT INTO cohost_gold_registrations (
-                registration_id, uti_number, screenshot_filename, full_name, email, mobile, amount_paid
+                registration_id, uti_number, screenshot_filename, full_name, email, mobile, club_id, club_name, amount_paid
             ) VALUES (
-                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :amount
+                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :club_id, :club_name, :amount
             )";
             
             $stmt = $pdo->prepare($sql);
@@ -296,23 +308,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':full_name' => $full_name,
                 ':email' => $email,
                 ':mobile' => $mobile,
+                ':club_id' => $club_id ?: null,
+                ':club_name' => $club_name,
                 ':amount' => $amount_paid
             ]);
             
         } elseif ($ticket_type === 'cohost_silver') {
             $full_name = $_POST['full_name'] ?? '';
+            $club_id = $_POST['club_id'] ?? null;
+            $club_name = $_POST['club_name'] ?? '';
             
             if (!$full_name) {
                 throw new Exception('Full name is required.');
+            }
+            if (!$club_name) {
+                throw new Exception('Club name is required.');
             }
             
             $person_name = $full_name;
             $screenshot_filename = saveScreenshot($screenshot_file, $person_name, $ticket_type);
             
             $sql = "INSERT INTO cohost_silver_registrations (
-                registration_id, uti_number, screenshot_filename, full_name, email, mobile, amount_paid
+                registration_id, uti_number, screenshot_filename, full_name, email, mobile, club_id, club_name, amount_paid
             ) VALUES (
-                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :amount
+                :reg_id, :uti, :ss_filename, :full_name, :email, :mobile, :club_id, :club_name, :amount
             )";
             
             $stmt = $pdo->prepare($sql);
@@ -323,6 +342,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':full_name' => $full_name,
                 ':email' => $email,
                 ':mobile' => $mobile,
+                ':club_id' => $club_id ?: null,
+                ':club_name' => $club_name,
                 ':amount' => $amount_paid
             ]);
             

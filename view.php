@@ -13,20 +13,23 @@ $singles = $pdo->query("SELECT * FROM single_registrations ORDER BY created_at D
 $couples = $pdo->query("SELECT * FROM couple_registrations ORDER BY created_at DESC")->fetchAll();
 $platinum = $pdo->query("SELECT * FROM cohost_platinum_registrations ORDER BY created_at DESC")->fetchAll();
 $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at DESC")->fetchAll();
+$silver = $pdo->query("SELECT * FROM cohost_silver_registrations ORDER BY created_at DESC")->fetchAll();
 
 // Get counts
 $total_singles = count($singles);
 $total_couples = count($couples);
 $total_platinum = count($platinum);
 $total_gold = count($gold);
-$grand_total = $total_singles + $total_couples + $total_platinum + $total_gold;
+$total_silver = count($silver);
+$grand_total = $total_singles + $total_couples + $total_platinum + $total_gold + $total_silver;
 
 // Calculate total revenue
 $revenue_singles = array_sum(array_column($singles, 'amount_paid'));
 $revenue_couples = array_sum(array_column($couples, 'amount_paid'));
 $revenue_platinum = array_sum(array_column($platinum, 'amount_paid'));
 $revenue_gold = array_sum(array_column($gold, 'amount_paid'));
-$total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $revenue_gold;
+$revenue_silver = array_sum(array_column($silver, 'amount_paid'));
+$total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $revenue_gold + $revenue_silver;
 ?>
 
 <!DOCTYPE html>
@@ -393,6 +396,10 @@ $total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $reve
             <p>🏅 Gold Cohosts</p>
         </div>
         <div class="stat-card">
+            <h3><?php echo $total_silver; ?></h3>
+            <p>🥈 Silver Cohosts</p>
+        </div>
+        <div class="stat-card">
             <h3><?php echo $grand_total; ?></h3>
             <p>📊 Total Registrations</p>
         </div>
@@ -412,6 +419,7 @@ $total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $reve
                 <option value="couple">Couple Only</option>
                 <option value="platinum">Platinum Only</option>
                 <option value="gold">Gold Only</option>
+                <option value="silver">Silver Only</option>
             </select>
             <button onclick="searchAllTables()">🔍 Search</button>
             <button onclick="clearSearch()">Clear</button>
@@ -550,6 +558,7 @@ $total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $reve
                         <th>Email</th>
                         <th>Mobile</th>
                         <th>UTI Number</th>
+                        <th>Club</th>
                         <th>Amount</th>
                         <th>Screenshot</th>
                         <th>Date</th>
@@ -564,6 +573,7 @@ $total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $reve
                     <td><?php echo htmlspecialchars($p['email']); ?></td>
                     <td><?php echo htmlspecialchars($p['mobile']); ?></td>
                     <td><?php echo htmlspecialchars($p['uti_number']); ?></td>
+                    <td><?php echo htmlspecialchars($p['club_name'] ?? ''); ?></td>
                     <td><strong>₹<?php echo number_format($p['amount_paid'], 2); ?></strong></td>
                     <td class="screenshot-link">
                         <?php if($p['screenshot_filename']): ?>
@@ -599,6 +609,7 @@ $total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $reve
                         <th>Email</th>
                         <th>Mobile</th>
                         <th>UTI Number</th>
+                        <th>Club</th>
                         <th>Amount</th>
                         <th>Screenshot</th>
                         <th>Date</th>
@@ -613,10 +624,61 @@ $total_revenue = $revenue_singles + $revenue_couples + $revenue_platinum + $reve
                     <td><?php echo htmlspecialchars($g['email']); ?></td>
                     <td><?php echo htmlspecialchars($g['mobile']); ?></td>
                     <td><?php echo htmlspecialchars($g['uti_number']); ?></td>
+                    <td><?php echo htmlspecialchars($g['club_name'] ?? ''); ?></td>
                     <td><strong>₹<?php echo number_format($g['amount_paid'], 2); ?></strong></td>
                     <td class="screenshot-link">
                         <?php if($g['screenshot_filename']): ?>
                             <a href="javascript:void(0)" onclick="showImage('uploads/<?php echo urlencode($g['screenshot_filename']); ?>')">View</a>
+    <!-- Silver Cohost Registrations -->
+    <div class="section" id="silverSection">
+        <div class="section-header">
+            <h2>🥈 Co Hosting Silver <span class="badge"><?php echo $total_silver; ?> entries</span></h2>
+        </div>
+        <div class="table-wrapper">
+            <?php if(count($silver) > 0): ?>
+            <table id="silverTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Reg ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>UTI Number</th>
+                        <th>Club</th>
+                        <th>Amount</th>
+                        <th>Screenshot</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach($silver as $sv): ?>
+                <tr class="silver-row">
+                    <td><?php echo $sv['id']; ?></td>
+                    <td><strong><?php echo htmlspecialchars($sv['registration_id']); ?></strong></td>
+                    <td><?php echo htmlspecialchars($sv['full_name']); ?></td>
+                    <td><?php echo htmlspecialchars($sv['email']); ?></td>
+                    <td><?php echo htmlspecialchars($sv['mobile']); ?></td>
+                    <td><?php echo htmlspecialchars($sv['uti_number']); ?></td>
+                    <td><?php echo htmlspecialchars($sv['club_name'] ?? ''); ?></td>
+                    <td><strong>₹<?php echo number_format($sv['amount_paid'], 2); ?></strong></td>
+                    <td class="screenshot-link">
+                        <?php if($sv['screenshot_filename']): ?>
+                            <a href="javascript:void(0)" onclick="showImage('uploads/<?php echo urlencode($sv['screenshot_filename']); ?>')">View</a>
+                        <?php else: ?>
+                            N/A
+                        <?php endif; ?>
+                    </td>
+                    <td><?php echo date('d-m-Y H:i', strtotime($sv['created_at'])); ?></td>
+                </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php else: ?>
+            <div class="no-data">No Silver cohost registrations yet.</div>
+            <?php endif; ?>
+        </div>
+    </div>
                         <?php else: ?>
                             N/A
                         <?php endif; ?>
@@ -678,6 +740,12 @@ function searchAllTables() {
         document.getElementById('goldSection').style.display = 'none';
     }
     
+    if (typeFilter === 'all' || typeFilter === 'silver') {
+        document.getElementById('silverSection').style.display = 'block';
+    } else {
+        document.getElementById('silverSection').style.display = 'none';
+    }
+    
     // Search in Single Table
     let singleTable = document.getElementById('singleTable');
     if (singleTable) {
@@ -730,6 +798,22 @@ function searchAllTables() {
     let goldTable = document.getElementById('goldTable');
     if (goldTable) {
         let rows = goldTable.getElementsByTagName('tbody')[0]?.getElementsByTagName('tr');
+        if (rows) {
+            for (let row of rows) {
+                let text = row.innerText.toLowerCase();
+                if (text.includes(searchText) || searchText === '') {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+    }
+    
+    // Search in Silver Table
+    let silverTable = document.getElementById('silverTable');
+    if (silverTable) {
+        let rows = silverTable.getElementsByTagName('tbody')[0]?.getElementsByTagName('tr');
         if (rows) {
             for (let row of rows) {
                 let text = row.innerText.toLowerCase();
@@ -816,6 +900,16 @@ function exportToExcel() {
         html += '<table border="1" cellpadding="5" cellspacing="0">';
         html += goldTable.querySelector('thead').innerHTML;
         html += goldTable.querySelector('tbody').innerHTML;
+        html += '</table><br><br>';
+    }
+    
+    // Add Silver Registrations
+    let silverTable = document.getElementById('silverTable');
+    if (silverTable && silverTable.querySelector('tbody tr')) {
+        html += '<h2>Co Hosting Silver</h2>';
+        html += '<table border="1" cellpadding="5" cellspacing="0">';
+        html += silverTable.querySelector('thead').innerHTML;
+        html += silverTable.querySelector('tbody').innerHTML;
         html += '</table><br><br>';
     }
     

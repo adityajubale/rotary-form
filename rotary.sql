@@ -59,6 +59,8 @@ CREATE TABLE `cohost_gold_registrations` (
   `full_name` varchar(200) NOT NULL,
   `email` varchar(150) NOT NULL,
   `mobile` varchar(20) NOT NULL,
+  `club_id` int(11) DEFAULT NULL,
+  `club_name` varchar(200) DEFAULT NULL,
   `amount_paid` decimal(10,2) NOT NULL,
   `payment_status` enum('pending','completed','failed') DEFAULT 'completed',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -78,6 +80,8 @@ CREATE TABLE `cohost_platinum_registrations` (
   `full_name` varchar(200) NOT NULL,
   `email` varchar(150) NOT NULL,
   `mobile` varchar(20) NOT NULL,
+  `club_id` int(11) DEFAULT NULL,
+  `club_name` varchar(200) DEFAULT NULL,
   `amount_paid` decimal(10,2) NOT NULL,
   `payment_status` enum('pending','completed','failed') DEFAULT 'completed',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -97,6 +101,8 @@ CREATE TABLE `cohost_silver_registrations` (
   `full_name` varchar(200) NOT NULL,
   `email` varchar(150) NOT NULL,
   `mobile` varchar(20) NOT NULL,
+  `club_id` int(11) DEFAULT NULL,
+  `club_name` varchar(200) DEFAULT NULL,
   `amount_paid` decimal(10,2) NOT NULL,
   `payment_status` enum('pending','completed','failed') DEFAULT 'completed',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()

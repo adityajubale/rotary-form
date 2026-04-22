@@ -13,12 +13,14 @@ $single_count = $pdo->query("SELECT COUNT(*) FROM single_registrations")->fetchC
 $couple_count = $pdo->query("SELECT COUNT(*) FROM couple_registrations")->fetchColumn();
 $platinum_count = $pdo->query("SELECT COUNT(*) FROM cohost_platinum_registrations")->fetchColumn();
 $gold_count = $pdo->query("SELECT COUNT(*) FROM cohost_gold_registrations")->fetchColumn();
+$silver_count = $pdo->query("SELECT COUNT(*) FROM cohost_silver_registrations")->fetchColumn();
 
 // Get all data
 $singles = $pdo->query("SELECT * FROM single_registrations ORDER BY created_at DESC")->fetchAll();
 $couples = $pdo->query("SELECT * FROM couple_registrations ORDER BY created_at DESC")->fetchAll();
 $platinum = $pdo->query("SELECT * FROM cohost_platinum_registrations ORDER BY created_at DESC")->fetchAll();
 $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at DESC")->fetchAll();
+$silver = $pdo->query("SELECT * FROM cohost_silver_registrations ORDER BY created_at DESC")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -80,7 +82,8 @@ $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at
         <div class="stat-card"><h3><?php echo $couple_count; ?></h3><p>Couple Registrations</p></div>
         <div class="stat-card"><h3><?php echo $platinum_count; ?></h3><p>Co Hosting Platinum</p></div>
         <div class="stat-card"><h3><?php echo $gold_count; ?></h3><p>CO Hosting Gold</p></div>
-        <div class="stat-card"><h3><?php echo $single_count + $couple_count + $platinum_count + $gold_count; ?></h3><p>Total Registrations</p></div>
+        <div class="stat-card"><h3><?php echo $silver_count; ?></h3><p>Co Hosting Silver</p></div>
+        <div class="stat-card"><h3><?php echo $single_count + $couple_count + $platinum_count + $gold_count + $silver_count; ?></h3><p>Total Registrations</p></div>
     </div>
     
     <!-- Search Box -->
@@ -202,6 +205,7 @@ $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at
                     <th>Email</th>
                     <th>Mobile</th>
                     <th>UTI Number</th>
+                    <th>Club</th>
                     <th>Amount</th>
                     <th>Screenshot</th>
                     <th>Date</th>
@@ -216,6 +220,7 @@ $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at
                 <td><?php echo htmlspecialchars($p['email']); ?></td>
                 <td><?php echo htmlspecialchars($p['mobile']); ?></td>
                 <td><?php echo htmlspecialchars($p['uti_number']); ?></td>
+                <td><?php echo htmlspecialchars($p['club_name'] ?? ''); ?></td>
                 <td>₹<?php echo $p['amount_paid']; ?></td>
                 <td class="screenshot-link"><?php if($p['screenshot_filename']): ?><a href="uploads/<?php echo urlencode($p['screenshot_filename']); ?>" target="_blank">View Screenshot</a><?php else: ?>N/A<?php endif; ?></td>
                 <td><?php echo date('d-m-Y H:i', strtotime($p['created_at'])); ?></td>
@@ -243,6 +248,7 @@ $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at
                     <th>Email</th>
                     <th>Mobile</th>
                     <th>UTI Number</th>
+                    <th>Club</th>
                     <th>Amount</th>
                     <th>Screenshot</th>
                     <th>Date</th>
@@ -257,6 +263,7 @@ $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at
                 <td><?php echo htmlspecialchars($g['email']); ?></td>
                 <td><?php echo htmlspecialchars($g['mobile']); ?></td>
                 <td><?php echo htmlspecialchars($g['uti_number']); ?></td>
+                <td><?php echo htmlspecialchars($g['club_name'] ?? ''); ?></td>
                 <td>₹<?php echo $g['amount_paid']; ?></td>
                 <td class="screenshot-link"><?php if($g['screenshot_filename']): ?><a href="uploads/<?php echo urlencode($g['screenshot_filename']); ?>" target="_blank">View Screenshot</a><?php else: ?>N/A<?php endif; ?></td>
                 <td><?php echo date('d-m-Y H:i', strtotime($g['created_at'])); ?></td>
@@ -267,6 +274,49 @@ $gold = $pdo->query("SELECT * FROM cohost_gold_registrations ORDER BY created_at
         </div>
         <?php else: ?>
         <p>No CO Hosting Gold registrations yet.</p>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Co Hosting Silver -->
+    <div class="section">
+        <h2>🥈 Co Hosting Silver</h2>
+        <?php if(count($silver) > 0): ?>
+        <div style="overflow-x: auto;">
+        <table id="silverTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Reg ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>UTI Number</th>
+                    <th>Club</th>
+                    <th>Amount</th>
+                    <th>Screenshot</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach($silver as $sv): ?>
+            <tr>
+                <td><?php echo $sv['id']; ?></td>
+                <td><?php echo htmlspecialchars($sv['registration_id']); ?></td>
+                <td><?php echo htmlspecialchars($sv['full_name']); ?></td>
+                <td><?php echo htmlspecialchars($sv['email']); ?></td>
+                <td><?php echo htmlspecialchars($sv['mobile']); ?></td>
+                <td><?php echo htmlspecialchars($sv['uti_number']); ?></td>
+                <td><?php echo htmlspecialchars($sv['club_name'] ?? ''); ?></td>
+                <td>₹<?php echo $sv['amount_paid']; ?></td>
+                <td class="screenshot-link"><?php if($sv['screenshot_filename']): ?><a href="uploads/<?php echo urlencode($sv['screenshot_filename']); ?>" target="_blank">View Screenshot</a><?php else: ?>N/A<?php endif; ?></td>
+                <td><?php echo date('d-m-Y H:i', strtotime($sv['created_at'])); ?></td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+        <?php else: ?>
+        <p>No Co Hosting Silver registrations yet.</p>
         <?php endif; ?>
     </div>
 </div>
