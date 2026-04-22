@@ -1,9 +1,9 @@
 <?php
 // Database configuration
 $db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = 'rotary';
+$db_user = 'sednaris_bhavi';
+$db_pass = '!dKyAd9..{Ux';
+$db_name = 'sednaris_bhavi';
 
 
 try {

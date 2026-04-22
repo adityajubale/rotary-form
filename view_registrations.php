@@ -1,8 +1,8 @@
 <?php
 $db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = 'rotary';
+$db_user = 'sednaris_bhavi';
+$db_pass = '!dKyAd9..{Ux';
+$db_name = 'sednaris_bhavi';
 try {
     $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
