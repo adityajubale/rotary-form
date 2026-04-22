@@ -494,10 +494,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Designation *</label>
-                    <input type="text" id="designation" placeholder="e.g. Manager, Guest, CEO" required>
-                </div>
-                <div class="form-group">
                     <label>Mobile No *</label>
                     <input type="tel" id="mobile" placeholder="10 digit number" required>
                 </div>
@@ -766,7 +762,6 @@
         const clubName = document.getElementById('clubSelect')?.value;
         const memberName = document.getElementById('memberSelect')?.value;
         const role = document.getElementById('role')?.value;
-        const designation = document.getElementById('designation')?.value.trim();
         const mobile = document.getElementById('mobile')?.value.trim();
         const email = document.getElementById('email')?.value.trim();
         const food = document.getElementById('foodPref')?.value;
@@ -775,7 +770,6 @@
         if (!clubName) { errorDiv.innerText = "Please select a club"; return; }
         if (!memberName) { errorDiv.innerText = "Please select a member name"; return; }
         if (!role) { errorDiv.innerText = "Please select a role"; return; }
-        if (!designation) { errorDiv.innerText = "Designation is required"; return; }
         if (!mobile || !/^\d{10,12}$/.test(mobile)) { errorDiv.innerText = "Valid mobile number required (10 digits)"; return; }
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) { errorDiv.innerText = "Valid email required"; return; }
         if (!food) { errorDiv.innerText = "Please select food preference"; return; }
@@ -788,7 +782,6 @@
             person_name: memberName,
             club_name: clubName,
             role: role,
-            designation: designation,
             food_preference: food,
             alcohol: alcohol
         };

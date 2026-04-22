@@ -3,17 +3,13 @@ header('Content-Type: text/html');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$db_host = 'localhost';
-$db_user = 'sednaris_bhavi';
-$db_pass = '!dKyAd9..{Ux';
-$db_name = 'sednaris_bhavi';
-
+// Include centralized database connection
+require_once 'db_connection.php';
 
 echo "<h2>Database Connection Test</h2>";
 
 try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDBConnection();
     echo "<p style='color:green'>✓ Connected to database 'rotary' successfully!</p>";
     
     // Check if club_members table exists

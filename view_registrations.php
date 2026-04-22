@@ -1,11 +1,9 @@
 <?php
-$db_host = 'localhost';
-$db_user = 'sednaris_bhavi';
-$db_pass = '!dKyAd9..{Ux';
-$db_name = 'sednaris_bhavi';
+// Include centralized database connection
+require_once 'db_connection.php';
+
 try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDBConnection();
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }

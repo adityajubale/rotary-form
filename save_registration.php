@@ -11,11 +11,8 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Database configuration
-$db_host = 'localhost';
-$db_user = 'sednaris_bhavi';
-$db_pass = '!dKyAd9..{Ux';
-$db_name = 'sednaris_bhavi';
+// Include centralized database connection
+require_once 'db_connection.php';
 
 // Create upload directory if not exists
 $upload_dir = __DIR__ . '/uploads/';
@@ -117,8 +114,7 @@ function sendConfirmationEmail($to, $subject, $body) {
 
 // Connect to database
 try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDBConnection();
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
     exit;
@@ -157,7 +153,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($ticket_type === 'single') {
             $full_name = $_POST['full_name'] ?? '';
-            $designation = $_POST['designation'] ?? '';
             $role = $_POST['role'] ?? '';
             $club_id = $_POST['club_id'] ?? null;
             $club_name = $_POST['club_name'] ?? '';
@@ -168,10 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Full name is required.');
             }
             
-            if (!$designation) {
-                throw new Exception('Designation is required.');
-            }
-            
             if (!$role) {
                 throw new Exception('Role is required.');
             }
@@ -180,10 +171,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $screenshot_filename = saveScreenshot($screenshot_file, $person_name, $ticket_type);
             
             $sql = "INSERT INTO single_registrations (
-                registration_id, full_name, uti_number, screenshot_filename, designation, role, email, mobile,
+                registration_id, full_name, uti_number, screenshot_filename, role, email, mobile,
                 club_id, club_name, food_preference, alcohol, amount_paid
             ) VALUES (
-                :reg_id, :full_name, :uti, :ss_filename, :designation, :role, :email, :mobile,
+                :reg_id, :full_name, :uti, :ss_filename, :role, :email, :mobile,
                 :club_id, :club_name, :food, :alcohol, :amount
             )";
             
@@ -193,7 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':full_name' => $full_name,
                 ':uti' => $uti_number,
                 ':ss_filename' => $screenshot_filename,
-                ':designation' => $designation,
                 ':role' => $role,
                 ':email' => $email,
                 ':mobile' => $mobile,
